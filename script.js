@@ -38,14 +38,20 @@ var buildQuery = function ( bounds, table ) {
   return url;
 };
 
-var query = buildQuery( null, 'stops' );
+var overlay = null;
+var layer = null;
+
 // Load the station data. When the data comes back, create an overlay.
-d3.json( query, function( data ) {
-  var overlay = new google.maps.OverlayView();
+var processData = function( data ) {
+  if ( overlay ) {
+    overlay.setMap( null );
+  } else {
+  }
+  overlay = new google.maps.OverlayView();
 
   // Add the container when the overlay is added to the map.
   overlay.onAdd = function() {
-    var layer = d3.select( this.getPanes().overlayLayer ).append('div')
+    layer = d3.select( this.getPanes().overlayLayer ).append('div')
     .attr('class', 'stations');
 
     // Draw each marker as a separate SVG element.
@@ -73,15 +79,15 @@ d3.json( query, function( data ) {
         return 10;
       };
       marker.append('svg:circle')
-        .attr('r', 0 )
+        .attr('r', getRadius )
         .attr('cx', 100 )
         .attr('cy', 100 );
 
-      // Animate in circles
-      layer.selectAll( 'circle' ).transition()
-        .delay( function() { return 1000 * Math.random(); } )
-        .duration( 500 )
-        .attr('r', getRadius );
+      //// Animate in circles
+      //layer.selectAll( 'circle' ).transition()
+      //  .delay( function() { return 1000 * Math.random(); } )
+      //  .duration( 500 )
+      //  .attr('r', getRadius );
 
       // Add a label.
       marker.append('svg:text')
@@ -94,14 +100,22 @@ d3.json( query, function( data ) {
       layer.selectAll( 'text.label' ).transition()
         .duration( 500 );
     };
+
+    overlay.onRemove = function () {
+      layer.remove();
+    };
   };
 
   // Listen for map changes
   google.maps.event.addListener(map, 'idle', function() {
     var bounds = this.boundsAt(this.zoom);
-    console.log( bounds );
+    var query = buildQuery( null, 'stops' );
+    d3.json( query, processData );
   });
 
   // Bind our overlay to the map…
   overlay.setMap( map );
-});
+};
+
+var query = buildQuery( null, 'stops' );
+d3.json( query, processData );

@@ -275,12 +275,20 @@ google.maps.event.addListener( map, 'idle', function() {
   } );
 });
 
+var firstLocation = true;
 // Listen for location updates
 var onLocationUpdate = function ( geolocation ) {
   var latlon = {
     lat: geolocation.coords.latitude,
     lon: geolocation.coords.longitude
   };
+
+  if ( firstLocation ) {
+    var ll = new google.maps.LatLng(latlon.lat, latlon.lon)
+    map.panTo( ll );
+    map.setZoom( 18 );
+    firstLocation = false;
+  }
 
   locationLayer.update( [latlon] );
 };

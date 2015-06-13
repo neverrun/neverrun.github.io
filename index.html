@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- Based on http://bl.ocks.org/mbostock/899711 -->
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+    <style type="text/css">
+        html, body, #map {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        .stations, .stations svg {
+          position: absolute;
+        }
+
+        .stations svg {
+          font: 10px sans-serif;
+        }
+
+        .stations circle {
+          fill: blue;
+          stroke: white;
+          opacity: 0.5;
+          stroke-width: 1.5px;
+        }
+
+        #header {
+          padding: 2px 25px 10px;
+          background: #011;
+          background: linear-gradient(0deg, #011, #432);
+          color: #ccc;
+        }
+
+        #header button {
+            position: relative
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="header">
+        <h2 id="title">Prague live transport map</h2>
+    </div>
+    <div id="map"></div>
+    <script type="text/javascript" src="script.js"></script>
+  </body>
+</html>

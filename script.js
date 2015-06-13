@@ -1,5 +1,4 @@
 /*global d3, google*/
-
 google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
   var p = proj || this.getProjection();
   if (!p) {
@@ -24,11 +23,11 @@ google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
 
 // Create the Google Map…
 var map = new google.maps.Map( d3.select('#map').node(), {
-  zoom: 12,
-    minZoom: 12,
-    maxZoom: 21,
-    center: new google.maps.LatLng( 50.075538, 14.437800 ),
-    mapTypeId: google.maps.MapTypeId.ROADMAP
+  zoom: 14,
+  minZoom: 14,
+  maxZoom: 21,
+  center: new google.maps.LatLng( 50.075538, 14.437800 ),
+  mapTypeId: google.maps.MapTypeId.ROADMAP
 });
 
 var buildQuery = function ( bounds, table ) {
@@ -43,40 +42,46 @@ var buildQuery = function ( bounds, table ) {
   return url;
 };
 
-var _overlay = null;
-var _layer = null;
-var _projection = null;
-
 // Load the station data. When the data comes back, create an overlay.
-var processStops = function( data ) {
-  if ( _overlay ) {
-    _overlay.setMap( null );
-  } else {
-  }
-  _overlay = new google.maps.OverlayView();
+var StopsLayer = function( initData ) {
+  var _data = initData;
+  var _layer = null;
+  var _projection = null;
+  var _dataKey = 'stop_id';
 
-  var transform = function( d ) {
-    d = new google.maps.LatLng( d.value.stop_lat, d.value.stop_lon );
+  var transform = function ( d ) {
+    d = new google.maps.LatLng( d.stop_lat, d.stop_lon );
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
       .style('left', ( d.x - padding ) + 'px')
       .style('top', ( d.y - padding ) + 'px');
   };
 
+  var transformWithEase = function ( d ) {
+    d = new google.maps.LatLng( d.stop_lat, d.stop_lon );
+    d = _projection.fromLatLngToDivPixel( d );
+    return d3.select( this )
+      .transition().duration(300)
+      .style('left', ( d.x - padding ) + 'px')
+      .style('top', ( d.y - padding ) + 'px');
+  }
+
   // Add the container when the overlay is added to the map.
-  _overlay.onAdd = function() {
+  this.onAdd = function() {
     _layer = d3.select( this.getPanes().overlayLayer ).append('div')
     .attr('class', 'stations');
   };
 
   // Draw each marker as a separate SVG element.
   // We could use a single SVG, but what size would it have?
-  _overlay.draw = function() {
+  this.draw = function() {
     _projection = this.getProjection(),
     padding = 100;
 
     var marker = _layer.selectAll('svg')
-      .data( d3.entries( data ) )
+      .data( _data, function ( d ) {
+        return d[_dataKey];
+      } )
       .each( transform ) // update existing markers
       .enter().append('svg:svg')
       .each( transform )
@@ -97,26 +102,51 @@ var processStops = function( data ) {
       .attr('x', padding + 7 )
       .attr('y', padding )
       .attr('dy', '.31em')
-      .text( function( d ) { return d.value.stop_name; } );
+      .text( function( d ) { return d.stop_name; } );
 
     _layer.selectAll( 'text.label' ).transition()
       .duration( 500 );
   };
 
-  _overlay.onRemove = function () {
+  this.onRemove = function () {
     _layer.remove();
   };
 
+  this.update = function ( data ) {                    
+    //update internal data which drive redrawing on zoom_changed                   
+    for (var i = 0; i < data.length; i++) {
+      var found = false;
+      for (var j = 0; j < _data.length; j++) {
+        if (_data[j][_dataKey] === data[i][_dataKey]) {
+          found = true;
+          _data[j].stop_lat = data[i].stop_lat;
+          _data[j].stop_long = data[i].stop_long;
+        }
+      }
+      if (!found)
+        _data.push(data[i]);
+    }
+    this.draw();
+    _layer.selectAll("svg")
+      .data(_data, function (d) { return d[_dataKey]; }) 
+      .each(transformWithEase);                  
+  };
+
   // Bind our overlay to the map…
-  _overlay.setMap( map );
+  //_overlay.setMap( map );
 };
 
+StopsLayer.prototype = new google.maps.OverlayView();
+
+var stopsLayer= new StopsLayer( [] );
+stopsLayer.setMap( map );
 var query = buildQuery( null, 'stops' );
-d3.json( query, processStops );
 
 // Listen for map changes
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
   var query = buildQuery( bounds, 'stops' );
-  d3.json( query, processStops );
+  d3.json( query, function ( data ) {
+    stopsLayer.update( data );
+  } );
 });

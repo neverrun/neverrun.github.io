@@ -38,7 +38,7 @@ var buildQuery = function ( bounds, table ) {
   if ( bounds ) {
     Object.keys( bounds ).forEach( function ( key ) {
       url += '&' + key + '=' + bounds[key];
-    } );  
+    } );
   }
   return url;
 };
@@ -111,16 +111,16 @@ var processData = function( data ) {
     };
   };
 
-  // Listen for map changes
-  google.maps.event.addListener(map, 'idle', function() {
-    var bounds = this.boundsAt(this.zoom);
-    var query = buildQuery( bounds, 'stops' );
-    d3.json( query, processData );
-  });
-
   // Bind our overlay to the map…
   overlay.setMap( map );
 };
 
 var query = buildQuery( null, 'stops' );
 d3.json( query, processData );
+
+// Listen for map changes
+google.maps.event.addListener( map, 'idle', function() {
+  var bounds = this.boundsAt( this.zoom );
+  var query = buildQuery( bounds, 'stops' );
+  d3.json( query, processData );
+});

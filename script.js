@@ -1,4 +1,4 @@
-/*global d3, google*/
+/*global _, d3, google*/
 /*jshint camelcase: false */
 google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
   var p = proj || this.getProjection();
@@ -31,10 +31,12 @@ var map = new google.maps.Map( d3.select('#map').node(), {
   mapTypeId: google.maps.MapTypeId.ROADMAP
 });
 
-var buildQuery = function ( bounds, table ) {
+var buildQuery = function ( bounds, table, limit ) {
   var url = 'http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=';
   url += table;
-  url += '&limit=500';
+  if ( limit ) {
+    url += '&limit=' + limit;
+  }
   if ( bounds ) {
     Object.keys( bounds ).forEach( function ( key ) {
       url += '&' + key + '=' + bounds[key];
@@ -187,7 +189,7 @@ var RoutesLayer = function( initData ) {
       .attr('r', 5 )
       .attr('cx', 100 )
       .attr('cy', 100 )
-      .style('fill', '#666666' );
+      .style('fill', '#000000' );
 
     _layer.selectAll( 'text.label' ).transition()
       .duration( 500 );
@@ -231,13 +233,17 @@ routesLayer.setMap( map );
 // Listen for map changes
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
-  var query = buildQuery( bounds, 'stops' );
+  var query = buildQuery( bounds, 'stops', 500 );
   d3.json( query, function ( data ) {
     stopsLayer.update( data );
   } );
 
-  query = buildQuery( bounds, 'pid_routes' );
-  d3.json( query, function ( data ) {
-    routesLayer.update( data );
-  } );
+  if ( this.zoom > 15 ) {
+    query = buildQuery( bounds, 'pid_routes2' );
+    d3.json( query, function ( data ) {
+      // For now concat all the data, just showing points
+      var allPoints = _.reduce( _.values( data ), function (total, n ) { return total.concat( n ); } );
+      routesLayer.update( allPoints );
+    } );
+  }
 });

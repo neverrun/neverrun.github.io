@@ -247,6 +247,11 @@ var vehiclesLayer= new PointLayer( [], {
 } );
 vehiclesLayer.setMap( map );
 
+var locationLayer= new PointLayer( [], {
+  color: '#ff0000'
+} );
+locationLayer.setMap( map );
+
 // Listen for map changes
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
@@ -269,3 +274,15 @@ google.maps.event.addListener( map, 'idle', function() {
     vehiclesLayer.update( data );
   } );
 });
+
+// Listen for location updates
+var onLocationUpdate = function ( geolocation ) {
+  var latlon = {
+    lat: geolocation.coords.latitude,
+    lon: geolocation.coords.longitude
+  };
+
+  locationLayer.update( [latlon] );
+};
+
+navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );

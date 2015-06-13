@@ -48,14 +48,15 @@ var buildQuery = function ( bounds, table, limit ) {
 var padding = 0;
 
 // Load the station data. When the data comes back, create an overlay.
-var StopsLayer = function( initData ) {
+var StopsLayer = function( initData, options ) {
   var _data = initData;
   var _layer = null;
   var _projection = null;
-  var _dataKey = 'stop_id';
+  var _dataKey = options.dataKey || 'id';
+  options = options || {};
 
   var transform = function ( d ) {
-    d = new google.maps.LatLng( d.stop_lat, d.stop_lon );
+    d = new google.maps.LatLng( d.lat, d.lon );
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
       .style('left', ( d.x - padding ) + 'px')
@@ -63,7 +64,7 @@ var StopsLayer = function( initData ) {
   };
 
   var transformWithEase = function ( d ) {
-    d = new google.maps.LatLng( d.stop_lat, d.stop_lon );
+    d = new google.maps.LatLng( d.lat, d.lon );
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
       .transition().duration(300)
@@ -96,18 +97,24 @@ var StopsLayer = function( initData ) {
     var getRadius = function() {
       return 10;
     };
-    marker.append('svg:circle')
+    var circle = marker.append('svg:circle')
       .attr('r', getRadius )
       .attr('cx', 100 )
       .attr('cy', 100 );
 
+    if ( options.color ) {
+      circle.style('fill', options.color );
+    }
+
     // Add a label.
-    marker.append('svg:text')
-      .classed( 'label', true )
-      .attr('x', padding + 7 )
-      .attr('y', padding )
-      .attr('dy', '.31em')
-      .text( function( d ) { return d.stop_name; } );
+    if ( options.label ) {
+      marker.append('svg:text')
+        .classed( 'label', true )
+        .attr('x', padding + 7 )
+        .attr('y', padding )
+        .attr('dy', '.31em')
+        .text( function( d ) { return d[options.label]; } );
+    }
 
     _layer.selectAll( 'text.label' ).transition()
       .duration( 500 );
@@ -124,8 +131,8 @@ var StopsLayer = function( initData ) {
       for (var j = 0; j < _data.length; j++) {
         if (_data[j][_dataKey] === data[i][_dataKey]) {
           found = true;
-          _data[j].stop_lat = data[i].stop_lat;
-          _data[j].stop_lon = data[i].stop_lon;
+          _data[j].lat = data[i].lat;
+          _data[j].lon = data[i].lon;
         }
       }
       if ( !found ) {
@@ -224,26 +231,41 @@ var RoutesLayer = function( initData ) {
 RoutesLayer.prototype = new google.maps.OverlayView();
 
 // Create layers and add to map
-var stopsLayer= new StopsLayer( [] );
+var stopsLayer= new StopsLayer( [], {
+  color: '#004fe1',
+  dataKey: 'stopName',
+  label: 'stopName'
+} );
 stopsLayer.setMap( map );
 
 var routesLayer= new RoutesLayer( [] );
 routesLayer.setMap( map );
 
+var vehiclesLayer= new StopsLayer( [], {
+  color: '#00ff00',
+  dataKey: 'vehicleId'
+} );
+vehiclesLayer.setMap( map );
+
 // Listen for map changes
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
-  var query = buildQuery( bounds, 'stops', 500 );
+  var query = buildQuery( bounds, 'pid_stops', 500 );
   d3.json( query, function ( data ) {
     stopsLayer.update( data );
   } );
 
   if ( this.zoom > 15 ) {
-    query = buildQuery( bounds, 'pid_routes2' );
+    query = buildQuery( bounds, 'pid_routes' );
     d3.json( query, function ( data ) {
       // For now concat all the data, just showing points
       var allPoints = _.reduce( _.values( data ), function (total, n ) { return total.concat( n ); } );
       routesLayer.update( allPoints );
     } );
   }
+
+  query = buildQuery( bounds, 'pid_vehicles', 2500 );
+  d3.json( query, function ( data ) {
+    vehiclesLayer.update( data );
+  } );
 });

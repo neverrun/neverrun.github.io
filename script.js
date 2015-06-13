@@ -106,6 +106,13 @@ var PointLayer = function( initData, options ) {
       circle.style('fill', options.color );
     }
 
+    marker.append('svg:image')
+      .attr( 'xlink:href', 'assets/bus.png' )
+      .attr( 'x', 0 )
+      .attr( 'y', 0 )
+      .attr( 'width', 20 )
+      .attr( 'height', 20 );
+
     // Add a label.
     if ( options.label ) {
       marker.append('svg:text')
@@ -253,8 +260,9 @@ var locationLayer= new PointLayer( [], {
 locationLayer.setMap( map );
 
 // Listen for map changes
+var bounds = null;
 google.maps.event.addListener( map, 'idle', function() {
-  var bounds = this.boundsAt( this.zoom );
+  bounds = this.boundsAt( this.zoom );
   var query = buildQuery( bounds, 'pid_stops', 500 );
   d3.json( query, function ( data ) {
     stopsLayer.update( data );
@@ -274,6 +282,14 @@ google.maps.event.addListener( map, 'idle', function() {
     vehiclesLayer.update( data );
   } );
 });
+
+var liveUpdate = function () {
+  var query = buildQuery( bounds, 'pid_vehicles', 2500 );
+  d3.json( query, function ( data ) {
+    vehiclesLayer.update( data );
+  } );
+};
+setInterval( liveUpdate, 5000 );
 
 // Only center location a few times
 var locCount = 5;

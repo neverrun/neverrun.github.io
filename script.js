@@ -48,7 +48,7 @@ var buildQuery = function ( bounds, table, limit ) {
 var padding = 0;
 
 // Load the station data. When the data comes back, create an overlay.
-var StopsLayer = function( initData, options ) {
+var PointLayer = function( initData, options ) {
   var _data = initData;
   var _layer = null;
   var _projection = null;
@@ -146,7 +146,7 @@ var StopsLayer = function( initData, options ) {
   };
 };
 
-StopsLayer.prototype = new google.maps.OverlayView();
+PointLayer.prototype = new google.maps.OverlayView();
 
 var RoutesLayer = function( initData ) {
   var _data = initData;
@@ -231,7 +231,7 @@ var RoutesLayer = function( initData ) {
 RoutesLayer.prototype = new google.maps.OverlayView();
 
 // Create layers and add to map
-var stopsLayer= new StopsLayer( [], {
+var stopsLayer= new PointLayer( [], {
   color: '#004fe1',
   dataKey: 'stopName',
   label: 'stopName'
@@ -241,7 +241,7 @@ stopsLayer.setMap( map );
 var routesLayer= new RoutesLayer( [] );
 routesLayer.setMap( map );
 
-var vehiclesLayer= new StopsLayer( [], {
+var vehiclesLayer= new PointLayer( [], {
   color: '#00ff00',
   dataKey: 'vehicleId'
 } );

@@ -47,10 +47,34 @@ var buildQuery = function ( bounds, table, limit ) {
 
 var padding = 100;
 
+// Provide support to show/hide layers
+var HideableOverlay = function () {
+  this._div = null;
+
+  this.hide = function() {
+    if (this._div) { this._div.style( 'visibility', 'hidden' ); }
+  };
+
+  this.show = function() {
+    if (this._div) { this._div.style( 'visibility', 'visible' ); }
+  };
+
+  this.toggle = function() {
+    if (this._div) {
+      if (this._div.style( 'visibility' ) === 'hidden') {
+        this.show();
+      } else {
+        this.hide();
+      }
+    }
+  };
+};
+
+HideableOverlay.prototype = new google.maps.OverlayView();
+
 // Load the station data. When the data comes back, create an overlay.
 var PointLayer = function( initData, options ) {
   var _data = initData;
-  var _layer = null;
   var _projection = null;
   var _dataKey = options.dataKey || 'id';
   options = options || {};
@@ -75,7 +99,7 @@ var PointLayer = function( initData, options ) {
 
   // Add the container when the overlay is added to the map.
   this.onAdd = function() {
-    _layer = d3.select( this.getPanes().overlayLayer ).append('div')
+    this._div = d3.select( this.getPanes().overlayLayer ).append('div')
     .attr('class', 'stations');
   };
 
@@ -84,7 +108,7 @@ var PointLayer = function( initData, options ) {
   this.draw = function() {
     _projection = this.getProjection();
 
-    var marker = _layer.selectAll('svg')
+    var marker = this._div.selectAll('svg')
       .data( _data, function ( d ) {
         return d[_dataKey];
       } )
@@ -122,12 +146,12 @@ var PointLayer = function( initData, options ) {
         .text( function( d ) { return d[options.label]; } );
     }
 
-    _layer.selectAll( 'text.label' ).transition()
+    this._div.selectAll( 'text.label' ).transition()
       .duration( 500 );
   };
 
   this.onRemove = function () {
-    _layer.remove();
+    this._div.remove();
   };
 
   this.update = function ( data ) {
@@ -146,17 +170,16 @@ var PointLayer = function( initData, options ) {
       }
     }
     this.draw();
-    _layer.selectAll("svg")
+    this._div.selectAll("svg")
       .data(_data, function (d) { return d[_dataKey]; })
       .each(transformWithEase);
   };
 };
 
-PointLayer.prototype = new google.maps.OverlayView();
+PointLayer.prototype = new HideableOverlay();
 
 var RoutesLayer = function( initData ) {
   var _data = initData;
-  var _layer = null;
   var _projection = null;
   var _dataKeyFn = function ( d ) {
     return d.lat + d.lon;
@@ -181,7 +204,7 @@ var RoutesLayer = function( initData ) {
 
   // Add the container when the overlay is added to the map.
   this.onAdd = function() {
-    _layer = d3.select( this.getPanes().overlayLayer ).append('div')
+    this._div = d3.select( this.getPanes().overlayLayer ).append('div')
     .attr('class', 'stations');
   };
 
@@ -190,7 +213,7 @@ var RoutesLayer = function( initData ) {
   this.draw = function() {
     _projection = this.getProjection();
 
-    var marker = _layer.selectAll('svg')
+    var marker = this._div.selectAll('svg')
       .data( _data, _dataKeyFn )
       .each( transform ) // update existing markers
       .enter().append('svg:svg')
@@ -203,12 +226,12 @@ var RoutesLayer = function( initData ) {
       .attr('cy', padding )
       .style('fill', '#000000' );
 
-    _layer.selectAll( 'text.label' ).transition()
+    this._div.selectAll( 'text.label' ).transition()
       .duration( 500 );
   };
 
   this.onRemove = function () {
-    _layer.remove();
+    this._div.remove();
   };
 
   this.update = function ( data ) {
@@ -227,13 +250,13 @@ var RoutesLayer = function( initData ) {
       }
     }
     this.draw();
-    _layer.selectAll("svg")
+    this._div.selectAll("svg")
       .data(_data, _dataKeyFn )
       .each(transformWithEase);
   };
 };
 
-RoutesLayer.prototype = new google.maps.OverlayView();
+RoutesLayer.prototype = new HideableOverlay();
 
 // Create layers and add to map
 var stopsLayer= new PointLayer( [], {

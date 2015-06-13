@@ -31,22 +31,24 @@
         }
 
         #header {
-          padding: 2px 25px 10px;
+          padding: 2px 25px 4px;
           background: #011;
           background: linear-gradient(0deg, #011, #432);
           color: #ccc;
         }
 
-        #header button {
-            position: relative
-            top: 20px;
+        #header .toggle-button {
+            position: absolute;
+            top: 27px;
             right: 20px;
+            cursor: pointer;
         }
     </style>
   </head>
   <body>
     <div id="header">
         <h2 id="title">Prague live transport map</h2>
+        <div id='stops-layer-button' class='toggle-button'>Stations</div>
     </div>
     <div id="map"></div>
     <script type="text/javascript" src="script.js"></script>

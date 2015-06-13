@@ -343,3 +343,9 @@ var onLocationUpdate = function ( geolocation ) {
 };
 
 navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
+
+// Toggle stops layer
+var button = document.getElementById( 'stops-layer-button' );
+button.addEventListener( 'click', function () {
+  stopsLayer.toggle();
+} );

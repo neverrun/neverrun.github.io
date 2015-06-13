@@ -103,7 +103,7 @@ var PointLayer = function( initData, options ) {
     }
 
     if ( options.image ) {
-      var size = 3.5 * options.radius;
+      var size = 2 * options.radius;
       marker.append('svg:image')
         .attr( 'xlink:href', options.image )
         .attr( 'x', padding - 0.5 * size )

@@ -249,7 +249,16 @@ routesLayer.setMap( map );
 var vehiclesLayer= new PointLayer( [], {
   color: '#00ff00',
   dataKey: 'vehicleId',
-  image: 'assets/subway.png',
+  image: function ( d ) {
+    if ( d.vehicleType === 0 ) {
+      return 'assets/tram.png';
+    } else if ( d.vehicleType === 1 ) {
+      return 'assets/subway.png';
+    } else if ( d.vehicleType === 3 ) {
+      return 'assets/bus.png';
+    }
+    return null;
+  },
   radius: 17
 } );
 vehiclesLayer.setMap( map );

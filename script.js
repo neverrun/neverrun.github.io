@@ -1,7 +1,7 @@
 /*global d3, google*/
 
-google.maps.Map.prototype.boundsAt = function (zoom, center, projection, div) {
-  var p = projection || this.getProjection();
+google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
+  var p = proj || this.getProjection();
   if (!p) {
     return undefined;
   }
@@ -43,84 +43,80 @@ var buildQuery = function ( bounds, table ) {
   return url;
 };
 
-var overlay = null;
-var layer = null;
+var _overlay = null;
+var _layer = null;
+var _projection = null;
 
 // Load the station data. When the data comes back, create an overlay.
-var processData = function( data ) {
-  if ( overlay ) {
-    overlay.setMap( null );
+var processStops = function( data ) {
+  if ( _overlay ) {
+    _overlay.setMap( null );
   } else {
   }
-  overlay = new google.maps.OverlayView();
+  _overlay = new google.maps.OverlayView();
+
+  var transform = function( d ) {
+    d = new google.maps.LatLng( d.value.stop_lat, d.value.stop_lon );
+    d = _projection.fromLatLngToDivPixel( d );
+    return d3.select( this )
+      .style('left', ( d.x - padding ) + 'px')
+      .style('top', ( d.y - padding ) + 'px');
+  };
 
   // Add the container when the overlay is added to the map.
-  overlay.onAdd = function() {
-    layer = d3.select( this.getPanes().overlayLayer ).append('div')
+  _overlay.onAdd = function() {
+    _layer = d3.select( this.getPanes().overlayLayer ).append('div')
     .attr('class', 'stations');
+  };
 
-    // Draw each marker as a separate SVG element.
-    // We could use a single SVG, but what size would it have?
-    overlay.draw = function() {
-      var transform = function( d ) {
-        d = new google.maps.LatLng( d.value.stop_lat, d.value.stop_lon );
-        d = projection.fromLatLngToDivPixel( d );
-        return d3.select( this )
-          .style('left', ( d.x - padding ) + 'px')
-          .style('top', ( d.y - padding ) + 'px');
-      };
-      var projection = this.getProjection(),
-      padding = 100;
+  // Draw each marker as a separate SVG element.
+  // We could use a single SVG, but what size would it have?
+  _overlay.draw = function() {
+    _projection = this.getProjection(),
+    padding = 100;
 
-      var marker = layer.selectAll('svg')
-        .data( d3.entries( data ) )
-        .each( transform ) // update existing markers
-        .enter().append('svg:svg')
-        .each( transform )
-        .attr('class', 'marker');
+    var marker = _layer.selectAll('svg')
+      .data( d3.entries( data ) )
+      .each( transform ) // update existing markers
+      .enter().append('svg:svg')
+      .each( transform )
+      .attr('class', 'marker');
 
-      // Add a circle.
-      var getRadius = function( d ) {
-        return 10;
-      };
-      marker.append('svg:circle')
-        .attr('r', getRadius )
-        .attr('cx', 100 )
-        .attr('cy', 100 );
-
-      //// Animate in circles
-      //layer.selectAll( 'circle' ).transition()
-      //  .delay( function() { return 1000 * Math.random(); } )
-      //  .duration( 500 )
-      //  .attr('r', getRadius );
-
-      // Add a label.
-      marker.append('svg:text')
-        .classed( 'label', true )
-        .attr('x', padding + 7 )
-        .attr('y', padding )
-        .attr('dy', '.31em')
-        .text( function( d ) { return d.value.stop_name; } );
-
-      layer.selectAll( 'text.label' ).transition()
-        .duration( 500 );
+    // Add a circle.
+    var getRadius = function( d ) {
+      return 10;
     };
+    marker.append('svg:circle')
+      .attr('r', getRadius )
+      .attr('cx', 100 )
+      .attr('cy', 100 );
 
-    overlay.onRemove = function () {
-      layer.remove();
-    };
+    // Add a label.
+    marker.append('svg:text')
+      .classed( 'label', true )
+      .attr('x', padding + 7 )
+      .attr('y', padding )
+      .attr('dy', '.31em')
+      .text( function( d ) { return d.value.stop_name; } );
+
+    _layer.selectAll( 'text.label' ).transition()
+      .duration( 500 );
+  };
+
+  _overlay.onRemove = function () {
+    _layer.remove();
   };
 
   // Bind our overlay to the map…
-  overlay.setMap( map );
+  _overlay.setMap( map );
 };
 
 var query = buildQuery( null, 'stops' );
-d3.json( query, processData );
+d3.json( query, processStops );
 
 // Listen for map changes
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
   var query = buildQuery( bounds, 'stops' );
-  d3.json( query, processData );
+  d3.json( query, processStops );
 });

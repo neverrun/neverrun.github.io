@@ -143,7 +143,9 @@ var RoutesLayer = function( initData ) {
   var _data = initData;
   var _layer = null;
   var _projection = null;
-  var _dataKey = 'stop_id';
+  var _dataKeyFn = function ( d ) {
+    return d.lat + d.lon;
+  };
 
   var transform = function ( d ) {
     d = new google.maps.LatLng( d.lat, d.lon );
@@ -175,9 +177,7 @@ var RoutesLayer = function( initData ) {
     padding = 100;
 
     var marker = _layer.selectAll('svg')
-      .data( _data, function ( d ) {
-        return d[_dataKey];
-      } )
+      .data( _data, _dataKeyFn )
       .each( transform ) // update existing markers
       .enter().append('svg:svg')
       .each( transform )
@@ -213,9 +213,7 @@ var RoutesLayer = function( initData ) {
     for (var i = 0; i < data.length; i++) {
       var found = false;
       for (var j = 0; j < _data.length; j++) {
-        if ( _data[j][_dataKey] === data[i][_dataKey] &&
-             _data[j].lat === data[i].lat &&
-             _data[j].lon === data[i].lon ) {
+        if ( _dataKeyFn( _data[j] ) === _dataKeyFn( data[i] ) ) {
           found = true;
           _data[j].lat = data[i].lat;
           _data[j].lon = data[i].lon;
@@ -227,7 +225,7 @@ var RoutesLayer = function( initData ) {
     }
     this.draw();
     _layer.selectAll("svg")
-      .data(_data, function (d) { return d[_dataKey]; })
+      .data(_data, _dataKeyFn )
       .each(transformWithEase);
   };
 };

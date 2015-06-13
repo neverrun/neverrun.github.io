@@ -1,4 +1,27 @@
 /*global d3, google*/
+
+google.maps.Map.prototype.boundsAt = function (zoom, center, projection, div) {
+  var p = projection || this.getProjection();
+  if (!p) {
+    return undefined;
+  }
+  //var d = $(div || this.getDiv());
+  var d = div || this.getDiv();
+  var zf = Math.pow(2, zoom) * 2;
+  var dw = d.clientWidth  / zf;
+  var dh = d.clientHeight / zf;
+  var cpx = p.fromLatLngToPoint(center || this.getCenter());
+  var llb = new google.maps.LatLngBounds(
+      p.fromPointToLatLng(new google.maps.Point(cpx.x - dw, cpx.y + dh)),
+      p.fromPointToLatLng(new google.maps.Point(cpx.x + dw, cpx.y - dh)));
+  return {
+    'from_long': llb.qa.j,
+    'to_long': llb.qa.A,
+    'from_lat': llb.za.j,
+    'to_lat': llb.za.A
+  };
+};
+
 // Create the Google Map…
 var map = new google.maps.Map( d3.select('#map').node(), {
   zoom: 12,
@@ -8,8 +31,16 @@ var map = new google.maps.Map( d3.select('#map').node(), {
     mapTypeId: google.maps.MapTypeId.ROADMAP
 });
 
+var buildQuery = function ( bounds, table ) {
+  var url = 'http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=';
+  url += table;
+  url += '&limit=500';
+  return url;
+};
+
+var query = buildQuery( null, 'stops' );
 // Load the station data. When the data comes back, create an overlay.
-d3.json('http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=stops&limit=5000', function( data ) {
+d3.json( query, function( data ) {
   var overlay = new google.maps.OverlayView();
 
   // Add the container when the overlay is added to the map.
@@ -64,6 +95,12 @@ d3.json('http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=stops&limit=5000', 
         .duration( 500 );
     };
   };
+
+  // Listen for map changes
+  google.maps.event.addListener(map, 'idle', function() {
+    var bounds = this.boundsAt(this.zoom);
+    console.log( bounds );
+  });
 
   // Bind our overlay to the map…
   overlay.setMap( map );

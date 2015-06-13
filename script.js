@@ -17,8 +17,8 @@ google.maps.Map.prototype.boundsAt = function (zoom, center, projection, div) {
   return {
     'from_long': llb.qa.j,
     'to_long': llb.qa.A,
-    'from_lat': llb.za.j,
-    'to_lat': llb.za.A
+    'from_lat': llb.za.A,
+    'to_lat': llb.za.j
   };
 };
 
@@ -35,6 +35,11 @@ var buildQuery = function ( bounds, table ) {
   var url = 'http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=';
   url += table;
   url += '&limit=500';
+  if ( bounds ) {
+    Object.keys( bounds ).forEach( function ( key ) {
+      url += '&' + key + '=' + bounds[key];
+    } );  
+  }
   return url;
 };
 
@@ -109,7 +114,7 @@ var processData = function( data ) {
   // Listen for map changes
   google.maps.event.addListener(map, 'idle', function() {
     var bounds = this.boundsAt(this.zoom);
-    var query = buildQuery( null, 'stops' );
+    var query = buildQuery( bounds, 'stops' );
     d3.json( query, processData );
   });
 

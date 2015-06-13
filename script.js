@@ -275,7 +275,8 @@ google.maps.event.addListener( map, 'idle', function() {
   } );
 });
 
-var firstLocation = true;
+// Only center location a few times
+var locCount = 5;
 // Listen for location updates
 var onLocationUpdate = function ( geolocation ) {
   var latlon = {
@@ -283,11 +284,11 @@ var onLocationUpdate = function ( geolocation ) {
     lon: geolocation.coords.longitude
   };
 
-  if ( firstLocation ) {
-    var ll = new google.maps.LatLng(latlon.lat, latlon.lon)
+  if ( locCount > 0 ) {
+    var ll = new google.maps.LatLng(latlon.lat, latlon.lon);
     map.panTo( ll );
     map.setZoom( 18 );
-    firstLocation = false;
+    locCount--;
   }
 
   locationLayer.update( [latlon] );

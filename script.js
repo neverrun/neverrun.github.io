@@ -45,7 +45,7 @@ var buildQuery = function ( bounds, table, limit ) {
   return url;
 };
 
-var padding = 0;
+var padding = 100;
 
 // Load the station data. When the data comes back, create an overlay.
 var PointLayer = function( initData, options ) {
@@ -54,6 +54,7 @@ var PointLayer = function( initData, options ) {
   var _projection = null;
   var _dataKey = options.dataKey || 'id';
   options = options || {};
+  options.radius = options.radius || 10;
 
   var transform = function ( d ) {
     d = new google.maps.LatLng( d.lat, d.lon );
@@ -81,8 +82,7 @@ var PointLayer = function( initData, options ) {
   // Draw each marker as a separate SVG element.
   // We could use a single SVG, but what size would it have?
   this.draw = function() {
-    _projection = this.getProjection(),
-    padding = 100;
+    _projection = this.getProjection();
 
     var marker = _layer.selectAll('svg')
       .data( _data, function ( d ) {
@@ -93,25 +93,24 @@ var PointLayer = function( initData, options ) {
       .each( transform )
       .attr('class', 'marker');
 
-    // Add a circle.
-    var getRadius = function() {
-      return 10;
-    };
     var circle = marker.append('svg:circle')
-      .attr('r', getRadius )
-      .attr('cx', 100 )
-      .attr('cy', 100 );
+      .attr('r', options.radius )
+      .attr('cx', padding )
+      .attr('cy', padding );
 
     if ( options.color ) {
       circle.style('fill', options.color );
     }
 
-    marker.append('svg:image')
-      .attr( 'xlink:href', 'assets/bus.png' )
-      .attr( 'x', 0 )
-      .attr( 'y', 0 )
-      .attr( 'width', 20 )
-      .attr( 'height', 20 );
+    if ( options.image ) {
+      var size = 3.5 * options.radius;
+      marker.append('svg:image')
+        .attr( 'xlink:href', options.image )
+        .attr( 'x', padding - 0.5 * size )
+        .attr( 'y', padding - 0.5 * size)
+        .attr( 'width', size )
+        .attr( 'height', size );
+    }
 
     // Add a label.
     if ( options.label ) {
@@ -189,8 +188,7 @@ var RoutesLayer = function( initData ) {
   // Draw each marker as a separate SVG element.
   // We could use a single SVG, but what size would it have?
   this.draw = function() {
-    _projection = this.getProjection(),
-    padding = 100;
+    _projection = this.getProjection();
 
     var marker = _layer.selectAll('svg')
       .data( _data, _dataKeyFn )
@@ -201,8 +199,8 @@ var RoutesLayer = function( initData ) {
 
     marker.append('svg:circle')
       .attr('r', 5 )
-      .attr('cx', 100 )
-      .attr('cy', 100 )
+      .attr('cx', padding )
+      .attr('cy', padding )
       .style('fill', '#000000' );
 
     _layer.selectAll( 'text.label' ).transition()
@@ -250,7 +248,9 @@ routesLayer.setMap( map );
 
 var vehiclesLayer= new PointLayer( [], {
   color: '#00ff00',
-  dataKey: 'vehicleId'
+  dataKey: 'vehicleId',
+  image: 'assets/subway.png',
+  radius: 17
 } );
 vehiclesLayer.setMap( map );
 
@@ -268,7 +268,7 @@ google.maps.event.addListener( map, 'idle', function() {
     stopsLayer.update( data );
   } );
 
-  if ( this.zoom > 15 ) {
+  if ( this.zoom > 18 ) {
     query = buildQuery( bounds, 'pid_routes' );
     d3.json( query, function ( data ) {
       // For now concat all the data, just showing points

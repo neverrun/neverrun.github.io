@@ -301,7 +301,7 @@ var liveUpdate = function () {
 setInterval( liveUpdate, 5000 );
 
 // Only center location a few times
-var locCount = 5;
+var startTime = Date.now();
 // Listen for location updates
 var onLocationUpdate = function ( geolocation ) {
   var latlon = {
@@ -309,11 +309,11 @@ var onLocationUpdate = function ( geolocation ) {
     lon: geolocation.coords.longitude
   };
 
-  if ( locCount > 0 ) {
+  // Only zoom during first 7 seconds
+  if ( Date.now() - startTime < 7000 ) {
     var ll = new google.maps.LatLng(latlon.lat, latlon.lon);
     map.panTo( ll );
     map.setZoom( 18 );
-    locCount--;
   }
 
   locationLayer.update( [latlon] );

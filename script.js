@@ -181,24 +181,13 @@ var RoutesLayer = function( initData ) {
       .each( transform ) // update existing markers
       .enter().append('svg:svg')
       .each( transform )
-      .attr('class', 'marker');
+      .attr('class', 'dot');
 
-    // Add a circle.
-    var getRadius = function() {
-      return 10;
-    };
     marker.append('svg:circle')
-      .attr('r', getRadius )
+      .attr('r', 5 )
       .attr('cx', 100 )
-      .attr('cy', 100 );
-
-    // Add a label.
-    marker.append('svg:text')
-      .classed( 'label', true )
-      .attr('x', padding + 7 )
-      .attr('y', padding )
-      .attr('dy', '.31em')
-      .text( function( d ) { return d.stop_name; } );
+      .attr('cy', 100 )
+      .style('fill', '#666666' );
 
     _layer.selectAll( 'text.label' ).transition()
       .duration( 500 );
@@ -243,9 +232,9 @@ routesLayer.setMap( map );
 google.maps.event.addListener( map, 'idle', function() {
   var bounds = this.boundsAt( this.zoom );
   var query = buildQuery( bounds, 'stops' );
-  //d3.json( query, function ( data ) {
-  //  stopsLayer.update( data );
-  //} );
+  d3.json( query, function ( data ) {
+    stopsLayer.update( data );
+  } );
 
   query = buildQuery( bounds, 'pid_routes' );
   d3.json( query, function ( data ) {

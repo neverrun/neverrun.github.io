@@ -296,17 +296,24 @@ setInterval( liveUpdate, updateFreq );
 var startTime = Date.now();
 
 // Listen for location updates
+var lastLatLon = null;
+var panToLatLon = function ( latlon ) {
+  var ll = new google.maps.LatLng(latlon.lat, latlon.lon);
+  map.panTo( ll );
+  map.setZoom( 18 );
+};
+
 var onLocationUpdate = function ( geolocation ) {
   var latlon = {
     lat: geolocation.coords.latitude,
     lon: geolocation.coords.longitude
   };
 
-  // Only zoom during first 7 seconds
+  lastLatLon = latlon;
+
+  // Only zoom during first seconds
   if ( Date.now() - startTime < 5000 ) {
-    var ll = new google.maps.LatLng(latlon.lat, latlon.lon);
-    map.panTo( ll );
-    map.setZoom( 18 );
+    panToLatLon( latlon );
   }
 
   locationLayer.update( [latlon] );
@@ -317,8 +324,7 @@ navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighA
 // Eanble geolocation
 var button = document.getElementById( 'location-button' );
 button.addEventListener( 'click', function () {
-  startTime = Date.now();
-  navigator.geolocation.getCurrentPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
+  panToLatLon( lastLatLon );
 } );
 
 // Toggle stops layer

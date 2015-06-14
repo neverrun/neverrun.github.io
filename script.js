@@ -127,7 +127,7 @@ var PointLayer = function( initData, options ) {
       .attr('r', 0 )
       .attr('cx', padding )
       .attr('cy', padding );
-    circle.transition().duration( 500 )
+    circle.transition().duration( 1500 )
       .ease( 'elastic' )
       .attr('r', options.radius );
 
@@ -143,7 +143,7 @@ var PointLayer = function( initData, options ) {
         .attr( 'y', padding )
         .attr( 'width', 0 )
         .attr( 'height', 0 );
-      image.transition().duration( 500 )
+      image.transition().duration( 1500 )
         .ease( 'elastic' )
         .attr( 'x', padding - 0.5 * size )
         .attr( 'y', padding - 0.5 * size)

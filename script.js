@@ -164,13 +164,24 @@ var PointLayer = function( initData, options ) {
 
     // Add a label.
     if ( options.label ) {
-      newMarkers.append('svg:text')
+      var noMetro = function ( d ) { return d.vehicleType !== 1; };
+      newMarkers.filter( noMetro ).append('svg:text')
         .classed( 'label', true )
+        .text( function( d ) { return d[options.label]; } )
         .attr('x', padding + 7 )
         .attr('y', padding )
-        .attr('dy', '.31em')
-        .attr('dx', '.71em')
-        .text( function( d ) { return d[options.label]; } );
+        .each( function ( d ) {
+          if ( d.vehicleType !== undefined ) {
+            // Show labels for transport more to the side
+            d3.select( this )
+              .attr('dy', '-.41em')
+              .attr('dx', '.61em');
+          } else {
+            // Generally position label just off to the left
+            d3.select( this )
+              .attr('dy', '.31em');
+          }
+        } );
     }
 
     // Remove old markers
@@ -198,9 +209,10 @@ PointLayer.prototype = new HideableOverlay();
 
 // Create layers and add to map
 var stopsLayer= new PointLayer( [], {
-  color: '#004fe1',
+  color: '#99c8e5',
   dataKey: 'stopName',
-  label: 'stopName'
+  label: 'stopName',
+  radius: function () { return 6; }
 } );
 stopsLayer.setMap( map );
 
@@ -224,15 +236,9 @@ var vehiclesLayer= new PointLayer( [], {
     return null;
   },
   radius: function ( d ) {
-    if ( d.vehicleType === 0 ) { return 12; }
-    else if ( d.vehicleType === 1 ) { return 20; }
-    else if ( d.vehicleType === 3 ) { return 12; }
-  },
-  // This is a bit crap, as it is coupled to the radius value
-  size: function ( d ) {
-    if ( d.vehicleType === 0 ) { return 25; }
-    else if ( d.vehicleType === 1 ) { return 40; }
-    else if ( d.vehicleType === 3 ) { return 25; }
+    if ( d.vehicleType === 0 ) { return 14; } // Tram
+    else if ( d.vehicleType === 1 ) { return 20; } // Metro
+    else if ( d.vehicleType === 3 ) { return 12; } // Bus
   },
   label: 'routeId',
   dataKey: 'vehicleId',
@@ -288,6 +294,7 @@ setInterval( liveUpdate, updateFreq );
 
 // Only center location a few times
 var startTime = Date.now();
+
 // Listen for location updates
 var onLocationUpdate = function ( geolocation ) {
   var latlon = {
@@ -305,7 +312,7 @@ var onLocationUpdate = function ( geolocation ) {
   locationLayer.update( [latlon] );
 };
 
-//navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
+navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
 
 // Toggle stops layer
 var button = document.getElementById( 'stops-layer-button' );

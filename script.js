@@ -109,16 +109,20 @@ var PointLayer = function( initData, options ) {
   this.draw = function( animated ) {
     _projection = this.getProjection();
 
-    var marker = this._div.selectAll('svg')
+    var markers = this._div.selectAll('svg')
       .data( _data, function ( d ) {
         return d[_dataKey];
-      } )
-      .each( animated ? transformWithEase : transform ) // update existing markers
-      .enter().append('svg:svg')
+      } );
+
+    // Update existing markers
+    markers.each( animated ? transformWithEase : transform );
+      
+    // Add new markers
+    var newMarkers = markers.enter().append('svg:svg')
       .each( transform )
       .attr('class', 'marker');
 
-    var circle = marker.append('svg:circle')
+    var circle = newMarkers.append('svg:circle')
       .attr('r', options.radius )
       .attr('cx', padding )
       .attr('cy', padding );
@@ -129,7 +133,7 @@ var PointLayer = function( initData, options ) {
 
     if ( options.image ) {
       var size = 2 * options.radius;
-      marker.append('svg:image')
+      newMarkers.append('svg:image')
         .attr( 'xlink:href', options.image )
         .attr( 'x', padding - 0.5 * size )
         .attr( 'y', padding - 0.5 * size)
@@ -139,7 +143,7 @@ var PointLayer = function( initData, options ) {
 
     // Add a label.
     if ( options.label ) {
-      marker.append('svg:text')
+      newMarkers.append('svg:text')
         .classed( 'label', true )
         .attr('x', padding + 7 )
         .attr('y', padding )
@@ -147,8 +151,10 @@ var PointLayer = function( initData, options ) {
         .text( function( d ) { return d[options.label]; } );
     }
 
-    this._div.selectAll( 'text.label' ).transition()
-      .duration( 500 );
+    // Remove old markers
+    markers.exit().call( function ( d ) {
+      d.remove();
+    } );
   };
 
   this.onRemove = function () {
@@ -173,7 +179,7 @@ var PointLayer = function( initData, options ) {
     this.draw( animated );
     this._div.selectAll("svg")
       .data(_data, function (d) { return d[_dataKey]; })
-      .each(transformWithEase);
+      .each(transform);
   };
 };
 

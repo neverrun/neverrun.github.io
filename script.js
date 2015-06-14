@@ -85,6 +85,7 @@ var PointLayer = function( initData, options ) {
     d = new google.maps.LatLng( d.lat, d.lon );
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
+      .transition().duration( 100 )
       .style('left', ( d.x - padding ) + 'px')
       .style('top', ( d.y - padding ) + 'px');
   };
@@ -123,9 +124,12 @@ var PointLayer = function( initData, options ) {
       .attr('class', 'marker');
 
     var circle = newMarkers.append('svg:circle')
-      .attr('r', options.radius )
+      .attr('r', 0 )
       .attr('cx', padding )
       .attr('cy', padding );
+    circle.transition().duration( 500 )
+      .ease( 'elastic' )
+      .attr('r', options.radius );
 
     if ( options.color ) {
       circle.style('fill', options.color );
@@ -133,8 +137,14 @@ var PointLayer = function( initData, options ) {
 
     if ( options.image ) {
       var size = 2 * options.radius;
-      newMarkers.append('svg:image')
+      var image = newMarkers.append('svg:image')
         .attr( 'xlink:href', options.image )
+        .attr( 'x', padding )
+        .attr( 'y', padding )
+        .attr( 'width', 0 )
+        .attr( 'height', 0 );
+      image.transition().duration( 500 )
+        .ease( 'elastic' )
         .attr( 'x', padding - 0.5 * size )
         .attr( 'y', padding - 0.5 * size)
         .attr( 'width', size )
@@ -153,7 +163,12 @@ var PointLayer = function( initData, options ) {
 
     // Remove old markers
     markers.exit().call( function ( d ) {
-      d.remove();
+      d
+        .transition()
+        .duration( 300 )
+        .attr( 'width', 0 )
+        .attr( 'height', 0 )
+        .remove();
     } );
   };
 
@@ -162,24 +177,25 @@ var PointLayer = function( initData, options ) {
   };
 
   this.update = function ( data, animated ) {
-    //update internal data which drive redrawing on zoom_changed
-    for (var i = 0; i < data.length; i++) {
-      var found = false;
-      for (var j = 0; j < _data.length; j++) {
-        if (_data[j][_dataKey] === data[i][_dataKey]) {
-          found = true;
-          _data[j].lat = data[i].lat;
-          _data[j].lon = data[i].lon;
-        }
-      }
-      if ( !found ) {
-        _data.push(data[i]);
-      }
-    }
+    ////update internal data which drive redrawing on zoom_changed
+    //for (var i = 0; i < data.length; i++) {
+    //  var found = false;
+    //  for (var j = 0; j < _data.length; j++) {
+    //    if (_data[j][_dataKey] === data[i][_dataKey]) {
+    //      found = true;
+    //      _data[j].lat = data[i].lat;
+    //      _data[j].lon = data[i].lon;
+    //    }
+    //  }
+    //  if ( !found ) {
+    //    _data.push(data[i]);
+    //  }
+    //}
+    _data = data;
     this.draw( animated );
-    this._div.selectAll("svg")
-      .data(_data, function (d) { return d[_dataKey]; })
-      .each(transform);
+    //this._div.selectAll("svg")
+    //  .data(_data, function (d) { return d[_dataKey]; })
+    //  .each(transform);
   };
 };
 

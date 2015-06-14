@@ -1,5 +1,8 @@
-/*global _, d3, google*/
+/*global d3, google*/
 /*jshint camelcase: false */
+var uagent = navigator.userAgent.toLowerCase();
+var ios = ( uagent.search( "iphone" ) > -1 || uagent.search( "ipod" ) > -1 || uagent.search( "ipad" ) > -1 || uagent.search( "appletv" ) > -1 );
+
 google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
   var p = proj || this.getProjection();
   if (!p) {
@@ -79,7 +82,7 @@ var PointLayer = function( initData, options ) {
   var _projection = null;
   var _dataKey = options.dataKey || 'id';
   options = options || {};
-  options.radius = options.radius || 10;
+  options.radius = options.radius || function () { return 10; };
 
   var transform = function ( d ) {
     d = new google.maps.LatLng( d.lat, d.lon );
@@ -95,13 +98,14 @@ var PointLayer = function( initData, options ) {
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
       .transition().duration( updateFreq )
+      .ease( 'linear' )
       .style('left', ( d.x - padding ) + 'px')
       .style('top', ( d.y - padding ) + 'px');
   };
 
   // Add the container when the overlay is added to the map.
   this.onAdd = function() {
-    this._div = d3.select( this.getPanes().overlayLayer ).append('div')
+    this._div = d3.select( this.getPanes().overlayMouseTarget ).append('div')
     .attr('class', 'stations');
   };
 
@@ -136,7 +140,6 @@ var PointLayer = function( initData, options ) {
     }
 
     if ( options.image ) {
-      var size = 2 * options.radius;
       var image = newMarkers.append('svg:image')
         .attr( 'xlink:href', options.image )
         .attr( 'x', padding )
@@ -145,10 +148,18 @@ var PointLayer = function( initData, options ) {
         .attr( 'height', 0 );
       image.transition().duration( 1500 )
         .ease( 'elastic' )
-        .attr( 'x', padding - 0.5 * size )
-        .attr( 'y', padding - 0.5 * size)
-        .attr( 'width', size )
-        .attr( 'height', size );
+        .each( function ( d ) {
+          var size = 2 * options.radius( d );
+          d3.select( this )
+            .attr( 'width', size )
+            .attr( 'height', size )
+            .attr( 'x', padding - 0.5 * size )
+            .attr( 'y', padding - 0.5 * size );
+        } );
+
+      image.on( ios ? 'touchend' : 'click', function( /*d*/ ) {
+        //console.log( d );
+      } );
     }
 
     // Add a label.
@@ -158,6 +169,7 @@ var PointLayer = function( initData, options ) {
         .attr('x', padding + 7 )
         .attr('y', padding )
         .attr('dy', '.31em')
+        .attr('dx', '.71em')
         .text( function( d ) { return d[options.label]; } );
     }
 
@@ -184,86 +196,6 @@ var PointLayer = function( initData, options ) {
 
 PointLayer.prototype = new HideableOverlay();
 
-var RoutesLayer = function( initData ) {
-  var _data = initData;
-  var _projection = null;
-  var _dataKeyFn = function ( d ) {
-    return d.lat + d.lon;
-  };
-
-  var transform = function ( d ) {
-    d = new google.maps.LatLng( d.lat, d.lon );
-    d = _projection.fromLatLngToDivPixel( d );
-    return d3.select( this )
-      .style('left', ( d.x - padding ) + 'px')
-      .style('top', ( d.y - padding ) + 'px');
-  };
-
-  var transformWithEase = function ( d ) {
-    d = new google.maps.LatLng( d.lat, d.lon );
-    d = _projection.fromLatLngToDivPixel( d );
-    return d3.select( this )
-      .transition().duration(300)
-      .style('left', ( d.x - padding ) + 'px')
-      .style('top', ( d.y - padding ) + 'px');
-  };
-
-  // Add the container when the overlay is added to the map.
-  this.onAdd = function() {
-    this._div = d3.select( this.getPanes().overlayLayer ).append('div')
-    .attr('class', 'stations');
-  };
-
-  // Draw each marker as a separate SVG element.
-  // We could use a single SVG, but what size would it have?
-  this.draw = function() {
-    _projection = this.getProjection();
-
-    var marker = this._div.selectAll('svg')
-      .data( _data, _dataKeyFn )
-      .each( transform ) // update existing markers
-      .enter().append('svg:svg')
-      .each( transform )
-      .attr('class', 'dot');
-
-    marker.append('svg:circle')
-      .attr('r', 5 )
-      .attr('cx', padding )
-      .attr('cy', padding )
-      .style('fill', '#000000' );
-
-    this._div.selectAll( 'text.label' ).transition()
-      .duration( 500 );
-  };
-
-  this.onRemove = function () {
-    this._div.remove();
-  };
-
-  this.update = function ( data ) {
-    //update internal data which drive redrawing on zoom_changed
-    for (var i = 0; i < data.length; i++) {
-      var found = false;
-      for (var j = 0; j < _data.length; j++) {
-        if ( _dataKeyFn( _data[j] ) === _dataKeyFn( data[i] ) ) {
-          found = true;
-          _data[j].lat = data[i].lat;
-          _data[j].lon = data[i].lon;
-        }
-      }
-      if ( !found ) {
-        _data.push(data[i]);
-      }
-    }
-    this.draw();
-    this._div.selectAll("svg")
-      .data(_data, _dataKeyFn )
-      .each(transformWithEase);
-  };
-};
-
-RoutesLayer.prototype = new HideableOverlay();
-
 // Create layers and add to map
 var stopsLayer= new PointLayer( [], {
   color: '#004fe1',
@@ -272,11 +204,37 @@ var stopsLayer= new PointLayer( [], {
 } );
 stopsLayer.setMap( map );
 
-var routesLayer= new RoutesLayer( [] );
-routesLayer.setMap( map );
+//var routesLayer= new PointLayer( [] );
+//routesLayer.setMap( map );
 
 var vehiclesLayer= new PointLayer( [], {
-  color: '#00ff00',
+  color: function ( d ) {
+    if ( d.vehicleType === 0 ) {
+      // Tram all same colour
+      return '#fcbc1b';
+    } else if ( d.vehicleType === 1 ) {
+      // Colour Metro by line
+      if ( d.routeId === 'A' ) { return '#3eb529'; }
+      else if ( d.routeId === 'B' ) { return '#fcf814'; }
+      else if ( d.routeId === 'C' ) { return '#fc4214'; }
+    } else if ( d.vehicleType === 3 ) {
+      // Bus all same colour
+      return '#a8aeaf';
+    }
+    return null;
+  },
+  radius: function ( d ) {
+    if ( d.vehicleType === 0 ) { return 12; }
+    else if ( d.vehicleType === 1 ) { return 20; }
+    else if ( d.vehicleType === 3 ) { return 12; }
+  },
+  // This is a bit crap, as it is coupled to the radius value
+  size: function ( d ) {
+    if ( d.vehicleType === 0 ) { return 25; }
+    else if ( d.vehicleType === 1 ) { return 40; }
+    else if ( d.vehicleType === 3 ) { return 25; }
+  },
+  label: 'routeId',
   dataKey: 'vehicleId',
   image: function ( d ) {
     if ( d.vehicleType === 0 ) {
@@ -287,8 +245,7 @@ var vehiclesLayer= new PointLayer( [], {
       return 'assets/bus.png';
     }
     return null;
-  },
-  radius: 17
+  }
 } );
 vehiclesLayer.setMap( map );
 
@@ -306,14 +263,14 @@ google.maps.event.addListener( map, 'idle', function() {
     stopsLayer.update( data );
   } );
 
-  if ( this.zoom > 18 ) {
-    query = buildQuery( bounds, 'pid_routes' );
-    d3.json( query, function ( data ) {
-      // For now concat all the data, just showing points
-      var allPoints = _.reduce( _.values( data ), function (total, n ) { return total.concat( n ); } );
-      routesLayer.update( allPoints );
-    } );
-  }
+  //if ( this.zoom > 18 ) {
+  //  query = buildQuery( bounds, 'pid_routes' );
+  //  d3.json( query, function ( data ) {
+  //    // For now concat all the data, just showing points
+  //    var allPoints = _.reduce( _.values( data ), function (total, n ) { return total.concat( n ); } );
+  //    routesLayer.update( allPoints );
+  //  } );
+  //}
 
   query = buildQuery( bounds, 'pid_vehicles', 4500 );
   d3.json( query, function ( data ) {
@@ -348,7 +305,7 @@ var onLocationUpdate = function ( geolocation ) {
   locationLayer.update( [latlon] );
 };
 
-navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
+//navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
 
 // Toggle stops layer
 var button = document.getElementById( 'stops-layer-button' );

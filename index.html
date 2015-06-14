@@ -33,21 +33,32 @@
           padding: 2px 25px 4px;
           background: #011;
           background: linear-gradient(0deg, #011, #432);
-          color: #ccc;
+          color: #eef;
+        }
+
+        #menu {
+            position: absolute;
+            top: 13px;
+            right: 13px;
         }
 
         #header .toggle-button {
-            position: absolute;
-            top: 27px;
-            right: 20px;
             cursor: pointer;
+            width: 30px;
+            border-radius: 20px;
+            background-color: white;
+            padding: 5px;
+            margin: 5px;
         }
     </style>
   </head>
   <body>
     <div id="header">
-        <h2 id="title">Never miss</h2>
-        <div id='stops-layer-button' class='toggle-button'>Stations</div>
+        <h2 id="title">NeverRun</h2>
+        <div id='menu'>
+            <img id='stops-layer-button' class='toggle-button' src='assets/tram.png'/>
+            <img id='location-button' class='toggle-button' src='assets/location.png'/>
+        </div>
     </div>
     <div id="map"></div>
     <script type="text/javascript" src="script.js"></script>

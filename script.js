@@ -303,7 +303,7 @@ var onLocationUpdate = function ( geolocation ) {
   };
 
   // Only zoom during first 7 seconds
-  if ( Date.now() - startTime < 7000 ) {
+  if ( Date.now() - startTime < 5000 ) {
     var ll = new google.maps.LatLng(latlon.lat, latlon.lon);
     map.panTo( ll );
     map.setZoom( 18 );
@@ -314,8 +314,15 @@ var onLocationUpdate = function ( geolocation ) {
 
 navigator.geolocation.watchPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
 
+// Eanble geolocation
+var button = document.getElementById( 'location-button' );
+button.addEventListener( 'click', function () {
+  startTime = Date.now();
+  navigator.geolocation.getCurrentPosition( onLocationUpdate, console.log, {enableHighAccuracy: true} );
+} );
+
 // Toggle stops layer
-var button = document.getElementById( 'stops-layer-button' );
+button = document.getElementById( 'stops-layer-button' );
 button.addEventListener( 'click', function () {
   stopsLayer.toggle();
 } );

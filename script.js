@@ -149,7 +149,7 @@ var PointLayer = function( initData, options ) {
       image.transition().duration( 1500 )
         .ease( 'elastic' )
         .each( function ( d ) {
-          var size = 2 * options.radius( d );
+          var size = 1.8 * options.radius( d );
           d3.select( this )
             .attr( 'width', size )
             .attr( 'height', size )
@@ -231,7 +231,7 @@ var vehiclesLayer= new PointLayer( [], {
       else if ( d.routeId === 'C' ) { return '#fc4214'; }
     } else if ( d.vehicleType === 3 ) {
       // Bus all same colour
-      return '#a8aeaf';
+      return '#f98ec4';
     }
     return null;
   },

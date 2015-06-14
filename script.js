@@ -177,25 +177,8 @@ var PointLayer = function( initData, options ) {
   };
 
   this.update = function ( data, animated ) {
-    ////update internal data which drive redrawing on zoom_changed
-    //for (var i = 0; i < data.length; i++) {
-    //  var found = false;
-    //  for (var j = 0; j < _data.length; j++) {
-    //    if (_data[j][_dataKey] === data[i][_dataKey]) {
-    //      found = true;
-    //      _data[j].lat = data[i].lat;
-    //      _data[j].lon = data[i].lon;
-    //    }
-    //  }
-    //  if ( !found ) {
-    //    _data.push(data[i]);
-    //  }
-    //}
     _data = data;
     this.draw( animated );
-    //this._div.selectAll("svg")
-    //  .data(_data, function (d) { return d[_dataKey]; })
-    //  .each(transform);
   };
 };
 

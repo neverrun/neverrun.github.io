@@ -46,6 +46,7 @@ var buildQuery = function ( bounds, table, limit ) {
 };
 
 var padding = 100;
+var updateFreq = 5000;
 
 // Provide support to show/hide layers
 var HideableOverlay = function () {
@@ -92,7 +93,7 @@ var PointLayer = function( initData, options ) {
     d = new google.maps.LatLng( d.lat, d.lon );
     d = _projection.fromLatLngToDivPixel( d );
     return d3.select( this )
-      .transition().duration(300)
+      .transition().duration( updateFreq )
       .style('left', ( d.x - padding ) + 'px')
       .style('top', ( d.y - padding ) + 'px');
   };
@@ -105,14 +106,14 @@ var PointLayer = function( initData, options ) {
 
   // Draw each marker as a separate SVG element.
   // We could use a single SVG, but what size would it have?
-  this.draw = function() {
+  this.draw = function( animated ) {
     _projection = this.getProjection();
 
     var marker = this._div.selectAll('svg')
       .data( _data, function ( d ) {
         return d[_dataKey];
       } )
-      .each( transform ) // update existing markers
+      .each( animated ? transformWithEase : transform ) // update existing markers
       .enter().append('svg:svg')
       .each( transform )
       .attr('class', 'marker');
@@ -154,7 +155,7 @@ var PointLayer = function( initData, options ) {
     this._div.remove();
   };
 
-  this.update = function ( data ) {
+  this.update = function ( data, animated ) {
     //update internal data which drive redrawing on zoom_changed
     for (var i = 0; i < data.length; i++) {
       var found = false;
@@ -169,7 +170,7 @@ var PointLayer = function( initData, options ) {
         _data.push(data[i]);
       }
     }
-    this.draw();
+    this.draw( animated );
     this._div.selectAll("svg")
       .data(_data, function (d) { return d[_dataKey]; })
       .each(transformWithEase);
@@ -309,19 +310,19 @@ google.maps.event.addListener( map, 'idle', function() {
     } );
   }
 
-  query = buildQuery( bounds, 'pid_vehicles', 2500 );
+  query = buildQuery( bounds, 'pid_vehicles', 4500 );
   d3.json( query, function ( data ) {
     vehiclesLayer.update( data );
   } );
 });
 
 var liveUpdate = function () {
-  var query = buildQuery( bounds, 'pid_vehicles', 2500 );
+  var query = buildQuery( bounds, 'pid_vehicles', 4500 );
   d3.json( query, function ( data ) {
-    vehiclesLayer.update( data );
+    vehiclesLayer.update( data, true );
   } );
 };
-setInterval( liveUpdate, 5000 );
+setInterval( liveUpdate, updateFreq );
 
 // Only center location a few times
 var startTime = Date.now();

@@ -35,7 +35,7 @@ var map = new google.maps.Map( d3.select('#map').node(), {
 });
 
 var buildQuery = function ( bounds, table, limit ) {
-  var url = 'http://ubuntu-bte.cloudapp.net/rest/v1/db.php?table=';
+  var url = 'http://178.77.239.195/v1/db.php?table=';
   url += table;
   if ( limit ) {
     url += '&limit=' + limit;

@@ -18,10 +18,10 @@ google.maps.Map.prototype.boundsAt = function (zoom, center, proj, div) {
       p.fromPointToLatLng(new google.maps.Point(cpx.x - dw, cpx.y + dh)),
       p.fromPointToLatLng(new google.maps.Point(cpx.x + dw, cpx.y - dh)));
   return {
-    'from_long': llb.qa.j,
-    'to_long': llb.qa.A,
-    'from_lat': llb.za.A,
-    'to_lat': llb.za.j
+    'from_long': llb.getSouthWest().lng(),
+    'to_long': llb.getNorthEast().lng(),
+    'from_lat': llb.getSouthWest().lat(),
+    'to_lat': llb.getNorthEast().lat()
   };
 };
 
